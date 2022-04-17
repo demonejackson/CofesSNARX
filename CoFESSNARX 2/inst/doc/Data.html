@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Michael Demone Jackson" />
+
+<meta name="date" content="2022-04-17" />
+
+<title>Data Preparation for SNARX and NARX</title>
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Data Preparation for SNARX and NARX</h1>
+<h4 class="author">Michael Demone Jackson</h4>
+<h4 class="date">2022-04-17</h4>
+
+
+
+<div id="data-preparation-narxdataprep" class="section level1">
+<h1>Data Preparation: narxdataprep</h1>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<hr />
+<p><strong>CoFESNARXdata</strong> and <strong>CoFESSNARXdata</strong> prepare your data for the CoFES NARX and CoFES SNARX networks respectively. <strong>CoFESNARXdata</strong> returns the the number of target lags (<span class="math inline">\(d_y\)</span>) and exegenous lags (<span class="math inline">\(d_x\)</span>) that you request in order to run the NARX model that you desire while the <strong>CoFESSNARXdata</strong> returns the same but also adds a seasonal lag (<em>s</em>) for the target series. Both functions allows users to set the number of lags in the future that the target series via the (<em>delay</em>=1) parameter.</p>
+</div>
+<div id="utility-functions" class="section level2">
+<h2>Utility Functions</h2>
+<p>There are two utility functions: (<strong>returnTARGET(data)</strong>,<strong>returnX(data,T)</strong>)</p>
+<ul>
+<li><p><strong>returnTARGET(data)</strong> takes the data frame created by <strong>CoFESNARXdata</strong> or <strong>CoFESSNARXdata</strong> and returns the target series as a dataframe.</p></li>
+<li><p><strong>returnX(data,T)</strong>takes the data frame created by<strong>CoFESNARXdata</strong> or <strong>CoFESSNARXdata</strong> and returns the regressors in a dataframe for your respective network.</p></li>
+</ul>
+<p><strong>Narx</strong>: <span class="math display">\[y[t+delay]=f(x[t-d_x],...,x[t-1],x[t], y[t-d_y],...,y[t-l], \Theta)\]</span></p>
+<ul>
+<li><p>(<span class="math inline">\(d_y\)</span>) The number of passed values/lags of <span class="math inline">\(y_t\)</span> used to predict <span class="math inline">\(y_{(t+delay)}\)</span></p></li>
+<li><p>(<span class="math inline">\(d_x\)</span>) The number of passed values/lags of <span class="math inline">\(x_t\)</span> used to predict <span class="math inline">\(y_{(t+delay)}\)</span></p></li>
+<li><p>(<em>delay</em>=1) The number of lags in the future that the networks predicts. ex) <span class="math inline">\(y_{(t+3)}\)</span></p></li>
+</ul>
+<p><strong>SNarx</strong>:<br />
+<span class="math display">\[y[t+delay]=f(x[t-d_x],...,x[t-1],x[t],\underline{y[t-s]},y[t-d_y],...,y[t-l], \Theta)\]</span></p>
+<ul>
+<li>(<em>s</em>): Seasonal Lag of <span class="math inline">\(y_t\)</span> used to predict <span class="math inline">\(y_{(t+delay)}\)</span></li>
+</ul>
+</div>
+<div id="cofesnarxdata-exmple-narx-data-prep" class="section level2">
+<h2>CoFESNARXdata Exmple (NARX data prep)</h2>
+<ol style="list-style-type: decimal">
+<li>With Date</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">dir.create</span>(<span class="st">&quot;inst/doc&quot;</span>)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">file.copy</span>(<span class="kw">dir</span>(<span class="st">&quot;vignettes&quot;</span>, <span class="dt">full.names=</span><span class="ot">TRUE</span>), <span class="st">&quot;inst/doc&quot;</span>, <span class="dt">overwrite=</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co">#&gt; logical(0)</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="kw">library</span>(CoFESSNARX)</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="kw">library</span>(dplyr)</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="co">#&gt; Attaching package: 'dplyr'</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="co">#&gt; The following objects are masked from 'package:stats':</span></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="co">#&gt;     filter, lag</span></a>
+<a class="sourceLine" id="cb1-13" data-line-number="13"><span class="co">#&gt; The following objects are masked from 'package:base':</span></a>
+<a class="sourceLine" id="cb1-14" data-line-number="14"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="co">#&gt;     intersect, setdiff, setequal, union</span></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="kw">set.seed</span>(<span class="dv">123</span>)</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">N &lt;-<span class="st"> </span><span class="dv">450</span> </a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">n &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span><span class="op">:</span>N)</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">a &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">10</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">sin</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">1</span><span class="op">:</span><span class="dv">6</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb1-21" data-line-number="21">b &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">8</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">cos</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">3</span><span class="op">:</span><span class="dv">3</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N) </a>
+<a class="sourceLine" id="cb1-22" data-line-number="22">c &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">6</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">sin</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">5</span><span class="op">:</span><span class="dv">1</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb1-23" data-line-number="23">y &lt;-<span class="st"> </span>(a<span class="op">+</span>b<span class="op">+</span>c)<span class="op">/</span><span class="dv">3</span><span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb1-24" data-line-number="24"></a>
+<a class="sourceLine" id="cb1-25" data-line-number="25"></a>
+<a class="sourceLine" id="cb1-26" data-line-number="26">date&lt;-<span class="kw">seq</span>(<span class="kw">as.Date</span>(<span class="st">&quot;2018-1-1&quot;</span>), <span class="kw">as.Date</span>(<span class="st">&quot;2019-3-26&quot;</span>), <span class="dt">by=</span><span class="st">&quot;days&quot;</span>)</a>
+<a class="sourceLine" id="cb1-27" data-line-number="27"></a>
+<a class="sourceLine" id="cb1-28" data-line-number="28">x &lt;-<span class="st"> </span><span class="kw">data.frame</span>(date,a,b,c)  </a>
+<a class="sourceLine" id="cb1-29" data-line-number="29">y &lt;-<span class="st"> </span><span class="kw">data.frame</span>(date, y)</a>
+<a class="sourceLine" id="cb1-30" data-line-number="30"></a>
+<a class="sourceLine" id="cb1-31" data-line-number="31">dx &lt;-<span class="st"> </span><span class="dv">2</span> <span class="co"># The AR order for the Exegenous series </span></a>
+<a class="sourceLine" id="cb1-32" data-line-number="32">dy &lt;-<span class="st"> </span><span class="dv">2</span> <span class="co"># The AR order for the Target series </span></a>
+<a class="sourceLine" id="cb1-33" data-line-number="33">delay &lt;-<span class="st"> </span><span class="dv">10</span> <span class="co"># The number of time steps that the target is in the future</span></a>
+<a class="sourceLine" id="cb1-34" data-line-number="34">date &lt;-<span class="st"> </span>T <span class="co"># Date or no Date Boolean</span></a>
+<a class="sourceLine" id="cb1-35" data-line-number="35"></a>
+<a class="sourceLine" id="cb1-36" data-line-number="36">data&lt;-CoFESSNARX<span class="op">::</span><span class="kw">CoFESNARXdata</span>(y,x,dy,dx,delay,date)</a>
+<a class="sourceLine" id="cb1-37" data-line-number="37"></a>
+<a class="sourceLine" id="cb1-38" data-line-number="38"><span class="kw">head</span>(data)</a>
+<a class="sourceLine" id="cb1-39" data-line-number="39"><span class="co">#&gt;         date        y   target    lag_1     lag_2        a         b</span></a>
+<a class="sourceLine" id="cb1-40" data-line-number="40"><span class="co">#&gt; 1 2018-01-04 2.722104 5.935349 1.190919 0.7410845 6.842324 6.6317738</span></a>
+<a class="sourceLine" id="cb1-41" data-line-number="41"><span class="co">#&gt; 2 2018-01-05 3.410082 4.701596 2.722104 1.1909190 2.402110 8.0395415</span></a>
+<a class="sourceLine" id="cb1-42" data-line-number="42"><span class="co">#&gt; 3 2018-01-06 2.903721 5.407872 3.410082 2.7221037 4.813864 0.7185519</span></a>
+<a class="sourceLine" id="cb1-43" data-line-number="43"><span class="co">#&gt; 4 2018-01-07 5.478569 7.901122 2.903721 3.4100821 3.186551 8.4544675</span></a>
+<a class="sourceLine" id="cb1-44" data-line-number="44"><span class="co">#&gt; 5 2018-01-08 4.088914 7.051137 5.478569 2.9037211 7.883963 1.6949763</span></a>
+<a class="sourceLine" id="cb1-45" data-line-number="45"><span class="co">#&gt; 6 2018-01-09 2.397290 2.297778 4.088914 5.4785687 4.294780 2.2197438</span></a>
+<a class="sourceLine" id="cb1-46" data-line-number="46"><span class="co">#&gt;             c  a_lag_1   b_lag_1     c_lag_1  a_lag_2   b_lag_2     c_lag_2</span></a>
+<a class="sourceLine" id="cb1-47" data-line-number="47"><span class="co">#&gt; 1 -2.67368117 1.764863 4.4034621 -2.20164632 5.290081 2.4090244 -1.50288950</span></a>
+<a class="sourceLine" id="cb1-48" data-line-number="48"><span class="co">#&gt; 2  2.17890198 6.842324 6.6317738 -2.67368117 1.764863 4.4034621 -2.20164632</span></a>
+<a class="sourceLine" id="cb1-49" data-line-number="49"><span class="co">#&gt; 3  0.03012533 2.402110 8.0395415  2.17890198 6.842324 6.6317738 -2.67368117</span></a>
+<a class="sourceLine" id="cb1-50" data-line-number="50"><span class="co">#&gt; 4  4.26792239 4.813864 0.7185519  0.03012533 2.402110 8.0395415  2.17890198</span></a>
+<a class="sourceLine" id="cb1-51" data-line-number="51"><span class="co">#&gt; 5  5.81933533 3.186551 8.4544675  4.26792239 4.813864 0.7185519  0.03012533</span></a>
+<a class="sourceLine" id="cb1-52" data-line-number="52"><span class="co">#&gt; 6  2.08343559 7.883963 1.6949763  5.81933533 3.186551 8.4544675  4.26792239</span></a>
+<a class="sourceLine" id="cb1-53" data-line-number="53"><span class="co">#&gt;    a_lag_3   b_lag_3     c_lag_3</span></a>
+<a class="sourceLine" id="cb1-54" data-line-number="54"><span class="co">#&gt; 1 5.559084 7.2148253 -0.82437375</span></a>
+<a class="sourceLine" id="cb1-55" data-line-number="55"><span class="co">#&gt; 2 5.290081 2.4090244 -1.50288950</span></a>
+<a class="sourceLine" id="cb1-56" data-line-number="56"><span class="co">#&gt; 3 1.764863 4.4034621 -2.20164632</span></a>
+<a class="sourceLine" id="cb1-57" data-line-number="57"><span class="co">#&gt; 4 6.842324 6.6317738 -2.67368117</span></a>
+<a class="sourceLine" id="cb1-58" data-line-number="58"><span class="co">#&gt; 5 2.402110 8.0395415  2.17890198</span></a>
+<a class="sourceLine" id="cb1-59" data-line-number="59"><span class="co">#&gt; 6 4.813864 0.7185519  0.03012533</span></a>
+<a class="sourceLine" id="cb1-60" data-line-number="60"></a>
+<a class="sourceLine" id="cb1-61" data-line-number="61"></a>
+<a class="sourceLine" id="cb1-62" data-line-number="62">y &lt;-<span class="st"> </span>CoFESSNARX<span class="op">::</span><span class="kw">returnTARGET</span>(data)</a>
+<a class="sourceLine" id="cb1-63" data-line-number="63">x &lt;-<span class="st"> </span>CoFESSNARX<span class="op">::</span><span class="kw">returnX</span>(data,T)</a>
+<a class="sourceLine" id="cb1-64" data-line-number="64"><span class="kw">print</span>(<span class="kw">head</span>(y))</a>
+<a class="sourceLine" id="cb1-65" data-line-number="65"><span class="co">#&gt;     target</span></a>
+<a class="sourceLine" id="cb1-66" data-line-number="66"><span class="co">#&gt; 1 5.935349</span></a>
+<a class="sourceLine" id="cb1-67" data-line-number="67"><span class="co">#&gt; 2 4.701596</span></a>
+<a class="sourceLine" id="cb1-68" data-line-number="68"><span class="co">#&gt; 3 5.407872</span></a>
+<a class="sourceLine" id="cb1-69" data-line-number="69"><span class="co">#&gt; 4 7.901122</span></a>
+<a class="sourceLine" id="cb1-70" data-line-number="70"><span class="co">#&gt; 5 7.051137</span></a>
+<a class="sourceLine" id="cb1-71" data-line-number="71"><span class="co">#&gt; 6 2.297778</span></a>
+<a class="sourceLine" id="cb1-72" data-line-number="72"><span class="kw">print</span>(<span class="kw">head</span>(x))</a>
+<a class="sourceLine" id="cb1-73" data-line-number="73"><span class="co">#&gt;          y    lag_1     lag_2        a         b           c  a_lag_1   b_lag_1</span></a>
+<a class="sourceLine" id="cb1-74" data-line-number="74"><span class="co">#&gt; 1 2.722104 1.190919 0.7410845 6.842324 6.6317738 -2.67368117 1.764863 4.4034621</span></a>
+<a class="sourceLine" id="cb1-75" data-line-number="75"><span class="co">#&gt; 2 3.410082 2.722104 1.1909190 2.402110 8.0395415  2.17890198 6.842324 6.6317738</span></a>
+<a class="sourceLine" id="cb1-76" data-line-number="76"><span class="co">#&gt; 3 2.903721 3.410082 2.7221037 4.813864 0.7185519  0.03012533 2.402110 8.0395415</span></a>
+<a class="sourceLine" id="cb1-77" data-line-number="77"><span class="co">#&gt; 4 5.478569 2.903721 3.4100821 3.186551 8.4544675  4.26792239 4.813864 0.7185519</span></a>
+<a class="sourceLine" id="cb1-78" data-line-number="78"><span class="co">#&gt; 5 4.088914 5.478569 2.9037211 7.883963 1.6949763  5.81933533 3.186551 8.4544675</span></a>
+<a class="sourceLine" id="cb1-79" data-line-number="79"><span class="co">#&gt; 6 2.397290 4.088914 5.4785687 4.294780 2.2197438  2.08343559 7.883963 1.6949763</span></a>
+<a class="sourceLine" id="cb1-80" data-line-number="80"><span class="co">#&gt;       c_lag_1  a_lag_2   b_lag_2     c_lag_2  a_lag_3   b_lag_3     c_lag_3</span></a>
+<a class="sourceLine" id="cb1-81" data-line-number="81"><span class="co">#&gt; 1 -2.20164632 5.290081 2.4090244 -1.50288950 5.559084 7.2148253 -0.82437375</span></a>
+<a class="sourceLine" id="cb1-82" data-line-number="82"><span class="co">#&gt; 2 -2.67368117 1.764863 4.4034621 -2.20164632 5.290081 2.4090244 -1.50288950</span></a>
+<a class="sourceLine" id="cb1-83" data-line-number="83"><span class="co">#&gt; 3  2.17890198 6.842324 6.6317738 -2.67368117 1.764863 4.4034621 -2.20164632</span></a>
+<a class="sourceLine" id="cb1-84" data-line-number="84"><span class="co">#&gt; 4  0.03012533 2.402110 8.0395415  2.17890198 6.842324 6.6317738 -2.67368117</span></a>
+<a class="sourceLine" id="cb1-85" data-line-number="85"><span class="co">#&gt; 5  4.26792239 4.813864 0.7185519  0.03012533 2.402110 8.0395415  2.17890198</span></a>
+<a class="sourceLine" id="cb1-86" data-line-number="86"><span class="co">#&gt; 6  5.81933533 3.186551 8.4544675  4.26792239 4.813864 0.7185519  0.03012533</span></a></code></pre></div>
+<ol style="list-style-type: decimal">
+<li>Without date</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="kw">library</span>(CoFESSNARX)</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw">library</span>(dplyr)</a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="kw">set.seed</span>(<span class="dv">123</span>)</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">N &lt;-<span class="st"> </span><span class="dv">450</span> </a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">n &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span><span class="op">:</span>N)</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">a &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">10</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">sin</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">1</span><span class="op">:</span><span class="dv">6</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">b &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">8</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">cos</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">3</span><span class="op">:</span><span class="dv">3</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N) </a>
+<a class="sourceLine" id="cb2-9" data-line-number="9">c &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">6</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">sin</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">5</span><span class="op">:</span><span class="dv">1</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb2-10" data-line-number="10">y &lt;-<span class="st"> </span>(a<span class="op">+</span>b<span class="op">+</span>c)<span class="op">/</span><span class="dv">3</span><span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb2-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb2-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb2-13" data-line-number="13">x &lt;-<span class="st"> </span><span class="kw">data.frame</span>(a,b,c)</a>
+<a class="sourceLine" id="cb2-14" data-line-number="14">y &lt;-<span class="st"> </span><span class="kw">data.frame</span>(y)</a>
+<a class="sourceLine" id="cb2-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb2-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb2-17" data-line-number="17">dx &lt;-<span class="st"> </span><span class="dv">2</span> <span class="co"># The AR order for the Exegenous series </span></a>
+<a class="sourceLine" id="cb2-18" data-line-number="18">dy &lt;-<span class="st"> </span><span class="dv">2</span> <span class="co"># The AR order for the Target series </span></a>
+<a class="sourceLine" id="cb2-19" data-line-number="19">delay &lt;-<span class="st"> </span><span class="dv">10</span> <span class="co"># The number of time steps that the target is in the future</span></a>
+<a class="sourceLine" id="cb2-20" data-line-number="20">date &lt;-<span class="st"> </span>F <span class="co"># Date or no Date Boolean</span></a>
+<a class="sourceLine" id="cb2-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb2-22" data-line-number="22">data&lt;-CoFESSNARX<span class="op">::</span><span class="kw">CoFESNARXdata</span>(y,x,dy,dx,delay,date)</a>
+<a class="sourceLine" id="cb2-23" data-line-number="23"></a>
+<a class="sourceLine" id="cb2-24" data-line-number="24"><span class="kw">head</span>(data)</a>
+<a class="sourceLine" id="cb2-25" data-line-number="25"><span class="co">#&gt;          y   target     lag_1     lag_2        a        b         c  b_lag_1</span></a>
+<a class="sourceLine" id="cb2-26" data-line-number="26"><span class="co">#&gt; 1 1.190919 4.894500 0.7410845 1.6624146 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb2-27" data-line-number="27"><span class="co">#&gt; 2 2.722104 5.935349 1.1909190 0.7410845 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb2-28" data-line-number="28"><span class="co">#&gt; 3 3.410082 4.701596 2.7221037 1.1909190 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb2-29" data-line-number="29"><span class="co">#&gt; 4 2.903721 5.407872 3.4100821 2.7221037 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb2-30" data-line-number="30"><span class="co">#&gt; 5 5.478569 7.901122 2.9037211 3.4100821 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb2-31" data-line-number="31"><span class="co">#&gt; 6 4.088914 7.051137 5.4785687 2.9037211 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb2-32" data-line-number="32"><span class="co">#&gt;     c_lag_1  b_lag_2   c_lag_2  b_lag_3    c_lag_3</span></a>
+<a class="sourceLine" id="cb2-33" data-line-number="33"><span class="co">#&gt; 1 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-34" data-line-number="34"><span class="co">#&gt; 2 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-35" data-line-number="35"><span class="co">#&gt; 3 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-36" data-line-number="36"><span class="co">#&gt; 4 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-37" data-line-number="37"><span class="co">#&gt; 5 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-38" data-line-number="38"><span class="co">#&gt; 6 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-39" data-line-number="39"></a>
+<a class="sourceLine" id="cb2-40" data-line-number="40"></a>
+<a class="sourceLine" id="cb2-41" data-line-number="41">y &lt;-<span class="st"> </span>CoFESSNARX<span class="op">::</span><span class="kw">returnTARGET</span>(data)</a>
+<a class="sourceLine" id="cb2-42" data-line-number="42">x &lt;-<span class="st"> </span>CoFESSNARX<span class="op">::</span><span class="kw">returnX</span>(data,F)</a>
+<a class="sourceLine" id="cb2-43" data-line-number="43"><span class="kw">print</span>(<span class="kw">head</span>(y))</a>
+<a class="sourceLine" id="cb2-44" data-line-number="44"><span class="co">#&gt;     target</span></a>
+<a class="sourceLine" id="cb2-45" data-line-number="45"><span class="co">#&gt; 1 4.894500</span></a>
+<a class="sourceLine" id="cb2-46" data-line-number="46"><span class="co">#&gt; 2 5.935349</span></a>
+<a class="sourceLine" id="cb2-47" data-line-number="47"><span class="co">#&gt; 3 4.701596</span></a>
+<a class="sourceLine" id="cb2-48" data-line-number="48"><span class="co">#&gt; 4 5.407872</span></a>
+<a class="sourceLine" id="cb2-49" data-line-number="49"><span class="co">#&gt; 5 7.901122</span></a>
+<a class="sourceLine" id="cb2-50" data-line-number="50"><span class="co">#&gt; 6 7.051137</span></a>
+<a class="sourceLine" id="cb2-51" data-line-number="51"><span class="kw">print</span>(<span class="kw">head</span>(x))</a>
+<a class="sourceLine" id="cb2-52" data-line-number="52"><span class="co">#&gt;          y     lag_1     lag_2        a        b         c  b_lag_1   c_lag_1</span></a>
+<a class="sourceLine" id="cb2-53" data-line-number="53"><span class="co">#&gt; 1 1.190919 0.7410845 1.6624146 6.842324 6.631774 -2.673681 4.403462 -2.201646</span></a>
+<a class="sourceLine" id="cb2-54" data-line-number="54"><span class="co">#&gt; 2 2.722104 1.1909190 0.7410845 6.842324 6.631774 -2.673681 4.403462 -2.201646</span></a>
+<a class="sourceLine" id="cb2-55" data-line-number="55"><span class="co">#&gt; 3 3.410082 2.7221037 1.1909190 6.842324 6.631774 -2.673681 4.403462 -2.201646</span></a>
+<a class="sourceLine" id="cb2-56" data-line-number="56"><span class="co">#&gt; 4 2.903721 3.4100821 2.7221037 6.842324 6.631774 -2.673681 4.403462 -2.201646</span></a>
+<a class="sourceLine" id="cb2-57" data-line-number="57"><span class="co">#&gt; 5 5.478569 2.9037211 3.4100821 6.842324 6.631774 -2.673681 4.403462 -2.201646</span></a>
+<a class="sourceLine" id="cb2-58" data-line-number="58"><span class="co">#&gt; 6 4.088914 5.4785687 2.9037211 6.842324 6.631774 -2.673681 4.403462 -2.201646</span></a>
+<a class="sourceLine" id="cb2-59" data-line-number="59"><span class="co">#&gt;    b_lag_2   c_lag_2  b_lag_3    c_lag_3</span></a>
+<a class="sourceLine" id="cb2-60" data-line-number="60"><span class="co">#&gt; 1 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-61" data-line-number="61"><span class="co">#&gt; 2 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-62" data-line-number="62"><span class="co">#&gt; 3 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-63" data-line-number="63"><span class="co">#&gt; 4 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-64" data-line-number="64"><span class="co">#&gt; 5 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb2-65" data-line-number="65"><span class="co">#&gt; 6 2.409024 -1.502889 7.214825 -0.8243737</span></a></code></pre></div>
+</div>
+<div id="cofessnarxdata-exmple-snarx-data-prep" class="section level2">
+<h2>CoFESSNARXdata Exmple (SNARX data prep)</h2>
+<ol style="list-style-type: decimal">
+<li>With Date</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="kw">library</span>(CoFESSNARX)</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="kw">library</span>(dplyr)</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="kw">set.seed</span>(<span class="dv">123</span>)</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">N &lt;-<span class="st"> </span><span class="dv">450</span> </a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">n &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span><span class="op">:</span>N)</a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">a &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">10</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">sin</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">1</span><span class="op">:</span><span class="dv">6</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">b &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">8</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">cos</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">3</span><span class="op">:</span><span class="dv">3</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N) </a>
+<a class="sourceLine" id="cb3-10" data-line-number="10">c &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">6</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">sin</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">5</span><span class="op">:</span><span class="dv">1</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb3-11" data-line-number="11">y &lt;-<span class="st"> </span>(a<span class="op">+</span>b<span class="op">+</span>c)<span class="op">/</span><span class="dv">3</span><span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb3-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb3-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb3-14" data-line-number="14">date&lt;-<span class="kw">seq</span>(<span class="kw">as.Date</span>(<span class="st">&quot;2018-1-1&quot;</span>), <span class="kw">as.Date</span>(<span class="st">&quot;2019-3-26&quot;</span>), <span class="dt">by=</span><span class="st">&quot;days&quot;</span>)</a>
+<a class="sourceLine" id="cb3-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb3-16" data-line-number="16">x &lt;-<span class="st"> </span><span class="kw">data.frame</span>(date,a,b,c)</a>
+<a class="sourceLine" id="cb3-17" data-line-number="17">y &lt;-<span class="st"> </span><span class="kw">data.frame</span>(date, y)</a>
+<a class="sourceLine" id="cb3-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb3-19" data-line-number="19"></a>
+<a class="sourceLine" id="cb3-20" data-line-number="20">dx &lt;-<span class="st"> </span><span class="dv">2</span> <span class="co"># The AR order for the Exegenous series </span></a>
+<a class="sourceLine" id="cb3-21" data-line-number="21">dy &lt;-<span class="st"> </span><span class="dv">2</span> <span class="co"># The AR order for the Target series </span></a>
+<a class="sourceLine" id="cb3-22" data-line-number="22">delay &lt;-<span class="st"> </span><span class="dv">10</span> <span class="co"># The number of time steps that the target is in the future</span></a>
+<a class="sourceLine" id="cb3-23" data-line-number="23">date &lt;-<span class="st"> </span>T <span class="co"># Date or no Date Boolean</span></a>
+<a class="sourceLine" id="cb3-24" data-line-number="24">s &lt;-<span class="st"> </span><span class="dv">12</span></a>
+<a class="sourceLine" id="cb3-25" data-line-number="25"></a>
+<a class="sourceLine" id="cb3-26" data-line-number="26">data&lt;-CoFESSNARX<span class="op">::</span><span class="kw">CoFESSNARXdata</span>(y,x,dy,dx,delay,s,date)</a>
+<a class="sourceLine" id="cb3-27" data-line-number="27"></a>
+<a class="sourceLine" id="cb3-28" data-line-number="28"><span class="kw">head</span>(data)</a>
+<a class="sourceLine" id="cb3-29" data-line-number="29"><span class="co">#&gt;         date        y   target   lag_01   lag_02    lag_12         a        b</span></a>
+<a class="sourceLine" id="cb3-30" data-line-number="30"><span class="co">#&gt; 1 2018-01-13 4.894500 2.442958 5.145624 2.878289 1.6624146  9.573215 3.420495</span></a>
+<a class="sourceLine" id="cb3-31" data-line-number="31"><span class="co">#&gt; 2 2018-01-14 5.935349 4.318455 4.894500 5.145624 0.7410845  4.666103 5.688670</span></a>
+<a class="sourceLine" id="cb3-32" data-line-number="32"><span class="co">#&gt; 3 2018-01-15 4.701596 2.718802 5.935349 4.894500 1.1909190  4.708443 2.516377</span></a>
+<a class="sourceLine" id="cb3-33" data-line-number="33"><span class="co">#&gt; 4 2018-01-16 5.407872 4.494865 4.701596 5.935349 2.7221037  5.809672 5.512032</span></a>
+<a class="sourceLine" id="cb3-34" data-line-number="34"><span class="co">#&gt; 5 2018-01-17 7.901122 3.710909 5.407872 4.701596 3.4100821 11.164461 4.755640</span></a>
+<a class="sourceLine" id="cb3-35" data-line-number="35"><span class="co">#&gt; 6 2018-01-18 7.051137 1.934011 7.901122 5.407872 2.9037211 10.191451 3.274576</span></a>
+<a class="sourceLine" id="cb3-36" data-line-number="36"><span class="co">#&gt;          c   a_lag_1  b_lag_1  c_lag_1  a_lag_2   b_lag_2  c_lag_2  a_lag_3</span></a>
+<a class="sourceLine" id="cb3-37" data-line-number="37"><span class="co">#&gt; 1 1.845201  8.745231 4.737076 4.846725 5.347813 0.5006814 4.827259 6.791495</span></a>
+<a class="sourceLine" id="cb3-38" data-line-number="38"><span class="co">#&gt; 2 5.227689  9.573215 3.420495 1.845201 8.745231 4.7370763 4.846725 5.347813</span></a>
+<a class="sourceLine" id="cb3-39" data-line-number="39"><span class="co">#&gt; 3 6.199412  4.666103 5.688670 5.227689 9.573215 3.4204954 1.845201 8.745231</span></a>
+<a class="sourceLine" id="cb3-40" data-line-number="40"><span class="co">#&gt; 4 5.502353  4.708443 2.516377 6.199412 4.666103 5.6886703 5.227689 9.573215</span></a>
+<a class="sourceLine" id="cb3-41" data-line-number="41"><span class="co">#&gt; 5 6.619805  5.809672 5.512032 5.502353 4.708443 2.5163765 6.199412 4.666103</span></a>
+<a class="sourceLine" id="cb3-42" data-line-number="42"><span class="co">#&gt; 6 5.305630 11.164461 4.755640 6.619805 5.809672 5.5120321 5.502353 4.708443</span></a>
+<a class="sourceLine" id="cb3-43" data-line-number="43"><span class="co">#&gt;     b_lag_3  c_lag_3</span></a>
+<a class="sourceLine" id="cb3-44" data-line-number="44"><span class="co">#&gt; 1 4.3426545 4.141569</span></a>
+<a class="sourceLine" id="cb3-45" data-line-number="45"><span class="co">#&gt; 2 0.5006814 4.827259</span></a>
+<a class="sourceLine" id="cb3-46" data-line-number="46"><span class="co">#&gt; 3 4.7370763 4.846725</span></a>
+<a class="sourceLine" id="cb3-47" data-line-number="47"><span class="co">#&gt; 4 3.4204954 1.845201</span></a>
+<a class="sourceLine" id="cb3-48" data-line-number="48"><span class="co">#&gt; 5 5.6886703 5.227689</span></a>
+<a class="sourceLine" id="cb3-49" data-line-number="49"><span class="co">#&gt; 6 2.5163765 6.199412</span></a>
+<a class="sourceLine" id="cb3-50" data-line-number="50"></a>
+<a class="sourceLine" id="cb3-51" data-line-number="51"></a>
+<a class="sourceLine" id="cb3-52" data-line-number="52">y &lt;-<span class="st"> </span>CoFESSNARX<span class="op">::</span><span class="kw">returnTARGET</span>(data)</a>
+<a class="sourceLine" id="cb3-53" data-line-number="53">x &lt;-<span class="st"> </span>CoFESSNARX<span class="op">::</span><span class="kw">returnX</span>(data,T)</a>
+<a class="sourceLine" id="cb3-54" data-line-number="54"><span class="kw">print</span>(<span class="kw">head</span>(y))</a>
+<a class="sourceLine" id="cb3-55" data-line-number="55"><span class="co">#&gt;     target</span></a>
+<a class="sourceLine" id="cb3-56" data-line-number="56"><span class="co">#&gt; 1 2.442958</span></a>
+<a class="sourceLine" id="cb3-57" data-line-number="57"><span class="co">#&gt; 2 4.318455</span></a>
+<a class="sourceLine" id="cb3-58" data-line-number="58"><span class="co">#&gt; 3 2.718802</span></a>
+<a class="sourceLine" id="cb3-59" data-line-number="59"><span class="co">#&gt; 4 4.494865</span></a>
+<a class="sourceLine" id="cb3-60" data-line-number="60"><span class="co">#&gt; 5 3.710909</span></a>
+<a class="sourceLine" id="cb3-61" data-line-number="61"><span class="co">#&gt; 6 1.934011</span></a>
+<a class="sourceLine" id="cb3-62" data-line-number="62"><span class="kw">print</span>(<span class="kw">head</span>(x))</a>
+<a class="sourceLine" id="cb3-63" data-line-number="63"><span class="co">#&gt;          y   lag_01   lag_02    lag_12         a        b        c   a_lag_1</span></a>
+<a class="sourceLine" id="cb3-64" data-line-number="64"><span class="co">#&gt; 1 4.894500 5.145624 2.878289 1.6624146  9.573215 3.420495 1.845201  8.745231</span></a>
+<a class="sourceLine" id="cb3-65" data-line-number="65"><span class="co">#&gt; 2 5.935349 4.894500 5.145624 0.7410845  4.666103 5.688670 5.227689  9.573215</span></a>
+<a class="sourceLine" id="cb3-66" data-line-number="66"><span class="co">#&gt; 3 4.701596 5.935349 4.894500 1.1909190  4.708443 2.516377 6.199412  4.666103</span></a>
+<a class="sourceLine" id="cb3-67" data-line-number="67"><span class="co">#&gt; 4 5.407872 4.701596 5.935349 2.7221037  5.809672 5.512032 5.502353  4.708443</span></a>
+<a class="sourceLine" id="cb3-68" data-line-number="68"><span class="co">#&gt; 5 7.901122 5.407872 4.701596 3.4100821 11.164461 4.755640 6.619805  5.809672</span></a>
+<a class="sourceLine" id="cb3-69" data-line-number="69"><span class="co">#&gt; 6 7.051137 7.901122 5.407872 2.9037211 10.191451 3.274576 5.305630 11.164461</span></a>
+<a class="sourceLine" id="cb3-70" data-line-number="70"><span class="co">#&gt;    b_lag_1  c_lag_1  a_lag_2   b_lag_2  c_lag_2  a_lag_3   b_lag_3  c_lag_3</span></a>
+<a class="sourceLine" id="cb3-71" data-line-number="71"><span class="co">#&gt; 1 4.737076 4.846725 5.347813 0.5006814 4.827259 6.791495 4.3426545 4.141569</span></a>
+<a class="sourceLine" id="cb3-72" data-line-number="72"><span class="co">#&gt; 2 3.420495 1.845201 8.745231 4.7370763 4.846725 5.347813 0.5006814 4.827259</span></a>
+<a class="sourceLine" id="cb3-73" data-line-number="73"><span class="co">#&gt; 3 5.688670 5.227689 9.573215 3.4204954 1.845201 8.745231 4.7370763 4.846725</span></a>
+<a class="sourceLine" id="cb3-74" data-line-number="74"><span class="co">#&gt; 4 2.516377 6.199412 4.666103 5.6886703 5.227689 9.573215 3.4204954 1.845201</span></a>
+<a class="sourceLine" id="cb3-75" data-line-number="75"><span class="co">#&gt; 5 5.512032 5.502353 4.708443 2.5163765 6.199412 4.666103 5.6886703 5.227689</span></a>
+<a class="sourceLine" id="cb3-76" data-line-number="76"><span class="co">#&gt; 6 4.755640 6.619805 5.809672 5.5120321 5.502353 4.708443 2.5163765 6.199412</span></a></code></pre></div>
+<ol style="list-style-type: decimal">
+<li>Without date</li>
+</ol>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="kw">library</span>(CoFESSNARX)</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="kw">library</span>(dplyr)</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="kw">set.seed</span>(<span class="dv">123</span>)</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">N &lt;-<span class="st"> </span><span class="dv">450</span> </a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">n &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">1</span><span class="op">:</span>N)</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">a &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">10</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">sin</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">1</span><span class="op">:</span><span class="dv">6</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">b &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">8</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">cos</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">3</span><span class="op">:</span><span class="dv">3</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N) </a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">c &lt;-<span class="st"> </span>n<span class="op">/</span><span class="dv">6</span><span class="op">+</span><span class="dv">4</span><span class="op">*</span><span class="kw">sin</span>(n<span class="op">/</span><span class="dv">10</span>)<span class="op">+</span><span class="kw">sample</span>(<span class="op">-</span><span class="dv">5</span><span class="op">:</span><span class="dv">1</span>,N,<span class="dt">replace=</span>T)<span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb4-11" data-line-number="11">y &lt;-<span class="st"> </span>(a<span class="op">+</span>b<span class="op">+</span>c)<span class="op">/</span><span class="dv">3</span><span class="op">+</span><span class="kw">rnorm</span>(N)</a>
+<a class="sourceLine" id="cb4-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb4-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb4-14" data-line-number="14">x &lt;-<span class="st"> </span><span class="kw">data.frame</span>(a,b,c)</a>
+<a class="sourceLine" id="cb4-15" data-line-number="15">y &lt;-<span class="st"> </span><span class="kw">data.frame</span>(y)</a>
+<a class="sourceLine" id="cb4-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb4-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb4-18" data-line-number="18">dx &lt;-<span class="st"> </span><span class="dv">2</span> <span class="co"># The AR order for the Exegenous series </span></a>
+<a class="sourceLine" id="cb4-19" data-line-number="19">dy &lt;-<span class="st"> </span><span class="dv">2</span> <span class="co"># The AR order for the Target series </span></a>
+<a class="sourceLine" id="cb4-20" data-line-number="20">delay &lt;-<span class="st"> </span><span class="dv">10</span> <span class="co"># The number of time steps that the target is in the future</span></a>
+<a class="sourceLine" id="cb4-21" data-line-number="21">date &lt;-<span class="st"> </span>F <span class="co"># Date or no Date Boolean</span></a>
+<a class="sourceLine" id="cb4-22" data-line-number="22">s &lt;-<span class="st"> </span><span class="dv">12</span></a>
+<a class="sourceLine" id="cb4-23" data-line-number="23">data&lt;-CoFESSNARX<span class="op">::</span><span class="kw">CoFESSNARXdata</span>(y,x,dy,dx,delay,s,date)</a>
+<a class="sourceLine" id="cb4-24" data-line-number="24"></a>
+<a class="sourceLine" id="cb4-25" data-line-number="25"><span class="kw">head</span>(data)</a>
+<a class="sourceLine" id="cb4-26" data-line-number="26"><span class="co">#&gt;          y   target   lag_01   lag_02    lag_12        a        b         c</span></a>
+<a class="sourceLine" id="cb4-27" data-line-number="27"><span class="co">#&gt; 1 4.894500 2.442958 5.145624 2.878289 1.6624146 6.842324 6.631774 -2.673681</span></a>
+<a class="sourceLine" id="cb4-28" data-line-number="28"><span class="co">#&gt; 2 5.935349 4.318455 4.894500 5.145624 0.7410845 6.842324 6.631774 -2.673681</span></a>
+<a class="sourceLine" id="cb4-29" data-line-number="29"><span class="co">#&gt; 3 4.701596 2.718802 5.935349 4.894500 1.1909190 6.842324 6.631774 -2.673681</span></a>
+<a class="sourceLine" id="cb4-30" data-line-number="30"><span class="co">#&gt; 4 5.407872 4.494865 4.701596 5.935349 2.7221037 6.842324 6.631774 -2.673681</span></a>
+<a class="sourceLine" id="cb4-31" data-line-number="31"><span class="co">#&gt; 5 7.901122 3.710909 5.407872 4.701596 3.4100821 6.842324 6.631774 -2.673681</span></a>
+<a class="sourceLine" id="cb4-32" data-line-number="32"><span class="co">#&gt; 6 7.051137 1.934011 7.901122 5.407872 2.9037211 6.842324 6.631774 -2.673681</span></a>
+<a class="sourceLine" id="cb4-33" data-line-number="33"><span class="co">#&gt;    b_lag_1   c_lag_1  b_lag_2   c_lag_2  b_lag_3    c_lag_3</span></a>
+<a class="sourceLine" id="cb4-34" data-line-number="34"><span class="co">#&gt; 1 4.403462 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-35" data-line-number="35"><span class="co">#&gt; 2 4.403462 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-36" data-line-number="36"><span class="co">#&gt; 3 4.403462 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-37" data-line-number="37"><span class="co">#&gt; 4 4.403462 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-38" data-line-number="38"><span class="co">#&gt; 5 4.403462 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-39" data-line-number="39"><span class="co">#&gt; 6 4.403462 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-40" data-line-number="40"></a>
+<a class="sourceLine" id="cb4-41" data-line-number="41"></a>
+<a class="sourceLine" id="cb4-42" data-line-number="42">y &lt;-<span class="st"> </span>CoFESSNARX<span class="op">::</span><span class="kw">returnTARGET</span>(data)</a>
+<a class="sourceLine" id="cb4-43" data-line-number="43">x &lt;-<span class="st"> </span>CoFESSNARX<span class="op">::</span><span class="kw">returnX</span>(data,F)</a>
+<a class="sourceLine" id="cb4-44" data-line-number="44"><span class="co">#x &lt;- CoFESSNARX::returnX(data,F)</span></a>
+<a class="sourceLine" id="cb4-45" data-line-number="45"><span class="kw">print</span>(<span class="kw">head</span>(y))</a>
+<a class="sourceLine" id="cb4-46" data-line-number="46"><span class="co">#&gt;     target</span></a>
+<a class="sourceLine" id="cb4-47" data-line-number="47"><span class="co">#&gt; 1 2.442958</span></a>
+<a class="sourceLine" id="cb4-48" data-line-number="48"><span class="co">#&gt; 2 4.318455</span></a>
+<a class="sourceLine" id="cb4-49" data-line-number="49"><span class="co">#&gt; 3 2.718802</span></a>
+<a class="sourceLine" id="cb4-50" data-line-number="50"><span class="co">#&gt; 4 4.494865</span></a>
+<a class="sourceLine" id="cb4-51" data-line-number="51"><span class="co">#&gt; 5 3.710909</span></a>
+<a class="sourceLine" id="cb4-52" data-line-number="52"><span class="co">#&gt; 6 1.934011</span></a>
+<a class="sourceLine" id="cb4-53" data-line-number="53"><span class="kw">print</span>(<span class="kw">head</span>(x))</a>
+<a class="sourceLine" id="cb4-54" data-line-number="54"><span class="co">#&gt;          y   lag_01   lag_02    lag_12        a        b         c  b_lag_1</span></a>
+<a class="sourceLine" id="cb4-55" data-line-number="55"><span class="co">#&gt; 1 4.894500 5.145624 2.878289 1.6624146 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb4-56" data-line-number="56"><span class="co">#&gt; 2 5.935349 4.894500 5.145624 0.7410845 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb4-57" data-line-number="57"><span class="co">#&gt; 3 4.701596 5.935349 4.894500 1.1909190 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb4-58" data-line-number="58"><span class="co">#&gt; 4 5.407872 4.701596 5.935349 2.7221037 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb4-59" data-line-number="59"><span class="co">#&gt; 5 7.901122 5.407872 4.701596 3.4100821 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb4-60" data-line-number="60"><span class="co">#&gt; 6 7.051137 7.901122 5.407872 2.9037211 6.842324 6.631774 -2.673681 4.403462</span></a>
+<a class="sourceLine" id="cb4-61" data-line-number="61"><span class="co">#&gt;     c_lag_1  b_lag_2   c_lag_2  b_lag_3    c_lag_3</span></a>
+<a class="sourceLine" id="cb4-62" data-line-number="62"><span class="co">#&gt; 1 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-63" data-line-number="63"><span class="co">#&gt; 2 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-64" data-line-number="64"><span class="co">#&gt; 3 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-65" data-line-number="65"><span class="co">#&gt; 4 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-66" data-line-number="66"><span class="co">#&gt; 5 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a>
+<a class="sourceLine" id="cb4-67" data-line-number="67"><span class="co">#&gt; 6 -2.201646 2.409024 -1.502889 7.214825 -0.8243737</span></a></code></pre></div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

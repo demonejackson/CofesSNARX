@@ -1,0 +1,22 @@
+Package: CoFESSNARX
+Type: Package
+Title: Seasonal NARX via Keras
+Version: 0.1.0
+Author: Michael Demone Jackson
+Maintainer: Michael Demone Jackson <demone@stanfordalumni.org>
+Description: The CoFES Seasonal NARX (SNARX) package offers a ARMA(P,0)$_s$
+    inspired seasonal version of the traditional Nonlinear Autoregressive
+    Neural Network with Exegenous variables (NARX) first introduced by 
+    Lin et al (1996).  This SNARX model allows users to add P seasonally 
+    lagged version of the original target time series as an regressor in the 
+    traditional NARX model.  
+Depends: R (>= 3.5.0)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports: dplyr (>= 1.0.7), keras (>= 2.2.5.0), magrittr, stats,
+        tensorflow, knitr
+RoxygenNote: 7.1.2
+VignetteBuilder: knitr
+NeedsCompilation: no
+Packaged: 2022-04-17 17:29:27 UTC; mdj3

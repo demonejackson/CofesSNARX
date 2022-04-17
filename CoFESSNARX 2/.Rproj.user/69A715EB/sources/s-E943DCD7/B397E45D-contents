@@ -1,0 +1,2 @@
+library(CoFESSNARX)
+vignette(package= "CoFESSNARX")

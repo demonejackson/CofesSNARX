@@ -1,0 +1,177 @@
+---
+title: "CoFES NARX"
+author: "Michael Demone Jackson"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# CoFES NARX Network
+
+## Overview
+________________________________________________________________________________
+
+The CoFES NARX network is implemented via a Multi Layer Perceptron (MLP) created with KERA's sequential model.  This implementation allows the user to set the number of hidden layers and the number of nodes in each hidden layer by passing in a list of node dimensions in to. 
+
+
+# NARX Example
+
+```{r cache=TRUE, warning=FALSE}
+
+library(CoFESSNARX)
+library(dplyr)
+library(keras)
+library(tensorflow)
+
+??CoFESSNARX
+set.seed(123)
+N <- 450 
+n <- seq(1:N)
+a <- n/10+4*sin(n/10)+sample(-1:6,N,replace=T)+rnorm(N)
+b <- n/8+4*cos(n/10)+sample(-3:3,N,replace=T)+rnorm(N) 
+c <- n/6+4*sin(n/10)+sample(-5:1,N,replace=T)+rnorm(N)
+y <- (a+b+c)/3+rnorm(N)
+
+
+date<-seq(as.Date("2018-1-1"), as.Date("2019-3-26"), by="days")
+
+x <- data.frame(date,a,b,c)  
+y <- data.frame(date, y)
+dx <- 2 # The AR order for the Exegenous series 
+dy <- 2 # The AR order for the Target series 
+delay <- 3 # The number of time steps that the target is in the future
+date <- T # Date or no Date Boolean
+
+data<-CoFESSNARX::CoFESNARXdata(y,x,dy,dx,delay,date)
+
+y <- CoFESSNARX::returnTARGET(data)
+x <- CoFESSNARX::returnX(data,T)
+
+x <- as.matrix(x)
+y <- as.matrix(y)
+
+
+
+end = dim(x)[1]* .75
+
+train_x = x[1:end,]
+#test_x = x[10001:nrow(x),]
+test_x = x[(end+1):dim(x)[1],]
+
+train_y = y[1:end]
+#test_y = y1[10001:nrow(x)]
+test_y = y[(end+1):dim(x)[1]]
+
+model <-  CoFESSNARX::CoFESNARX(x,y, c(64,32,16), .01,.01,.2,'relu')
+
+
+model %>% compile(
+    loss = 'mse',
+    optimizer = 'adam',
+    metrics = c("mean_absolute_error")
+  )
+
+summary(model)
+
+
+history<-model %>% fit(train_x, train_y, epochs = 100 ,verbose = 2,batch_size = 128, validation_split = 0.2)
+
+plot(history)
+
+y_pred <- model %>% predict(test_x)
+x_axes <- seq(1:length(y_pred))
+
+
+plot(test_y, col="red", type="l")
+lines( y_pred, col="blue")
+#lines( zer, col="blue")
+
+legend("topleft", legend=c("original", "predicted"),
+       col=c("red", "blue"), lty=1,cex=0.8)
+
+```
+
+
+# SNARX Example
+
+```{r cache=TRUE, warning=FALSE}
+
+library(CoFESSNARX)
+library(dplyr)
+library(keras)
+library(tensorflow)
+
+
+set.seed(123)
+N <- 450 
+n <- seq(1:N)
+a <- n/10+4*sin(n/10)+sample(-1:6,N,replace=T)+rnorm(N)
+b <- n/8+4*cos(n/10)+sample(-3:3,N,replace=T)+rnorm(N) 
+c <- n/6+4*sin(n/10)+sample(-5:1,N,replace=T)+rnorm(N)
+y <- (a+b+c)/3+rnorm(N)
+
+
+date<-seq(as.Date("2018-1-1"), as.Date("2019-3-26"), by="days")
+
+x <- data.frame(date,a,b,c)  
+y <- data.frame(date, y)
+
+dx <- 2 # The AR order for the Exegenous series 
+dy <- 2 # The AR order for the Target series 
+delay <- 3 # The number of time steps that the target is in the future
+date <- T # Date or no Date Boolean
+s <- 12
+
+data<-CoFESSNARX::CoFESSNARXdata(y,x,dy,dx,delay,s+delay,date)
+
+y <- CoFESSNARX::returnTARGET(data)
+x <- CoFESSNARX::returnX(data,T)
+
+x <- as.matrix(x)
+y <- as.matrix(y)
+
+
+end = dim(x)[1]* .75
+
+train_x = x[1:end,]
+#test_x = x[10001:nrow(x),]
+test_x = x[(end+1):dim(x)[1],]
+
+train_y = y[1:end]
+#test_y = y1[10001:nrow(x)]
+test_y = y[(end+1):dim(x)[1]]
+
+model <-  CoFESSNARX::CoFESNARX(x,y,c(64,32,16),.01,.01,0,'relu')
+
+model %>% compile(
+    loss = 'mse',
+    optimizer = 'adam',
+    metrics = c("mean_absolute_error")
+  )
+
+summary(model)
+
+history<-model %>% fit(train_x, train_y, epochs = 100 ,verbose = 2,batch_size = 128, validation_split = 0.2)
+
+plot(history)
+
+y_pred <- model %>% predict(test_x)
+x_axes <- seq(1:length(y_pred))
+
+plot(test_y, col="red", type="l")
+lines( y_pred, col="blue")
+#lines( zer, col="blue")
+
+legend("topleft", legend=c("original", "predicted"),col=c("red", "blue"), lty=1,cex=0.8)
+
+```

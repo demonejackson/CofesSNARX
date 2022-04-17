@@ -1,0 +1,212 @@
+---
+title: "Data Preparation for SNARX and NARX"
+author: "Michael Demone Jackson"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Data Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+# Data Preparation:  narxdataprep
+
+## Overview
+________________________________________________________________________________
+
+**CoFESNARXdata** and **CoFESSNARXdata** prepare your data for the CoFES NARX 
+and CoFES SNARX networks respectively.  **CoFESNARXdata** returns the the number
+of target lags ($d_y$) and exegenous lags  ($d_x$) that you request in order to
+run the NARX model that you desire while the **CoFESSNARXdata** returns the same
+but also adds a seasonal lag (*s*) for the target series.  Both functions allows
+users to set the number of lags in the future that the target series via the 
+(*delay*=1) parameter. 
+
+
+## Utility Functions
+There are two utility functions: (**returnTARGET(data)**,**returnX(data,T)**)
+
+- **returnTARGET(data)** takes the data frame created by 
+**CoFESNARXdata** or **CoFESSNARXdata** and returns the target series as a dataframe.
+
+- **returnX(data,T)**takes the data frame created by**CoFESNARXdata** or 
+**CoFESSNARXdata** and returns the regressors in a dataframe for your respective network.  
+
+**Narx**: $$y[t+delay]=f(x[t-d_x],...,x[t-1],x[t], y[t-d_y],...,y[t-l], \Theta)$$
+
+- ($d_y$) The number of passed values/lags of $y_t$ used to predict $y_{(t+delay)}$
+
+- ($d_x$) The number of passed values/lags of $x_t$ used to predict $y_{(t+delay)}$
+
+- (*delay*=1) The number of lags in the future that the networks predicts.  ex) $y_{(t+3)}$
+
+**SNarx**:  
+$$y[t+delay]=f(x[t-d_x],...,x[t-1],x[t],\underline{y[t-s]},y[t-d_y],...,y[t-l], \Theta)$$
+
+- (*s*):  Seasonal Lag of $y_t$ used to predict $y_{(t+delay)}$
+
+## CoFESNARXdata Exmple (NARX data prep)
+
+1)  With Date
+
+```{r warning=FALSE}
+
+dir.create("inst/doc")
+file.copy(dir("vignettes", full.names=TRUE), "inst/doc", overwrite=TRUE)
+
+library(CoFESSNARX)
+library(dplyr)
+
+set.seed(123)
+N <- 450 
+n <- seq(1:N)
+a <- n/10+4*sin(n/10)+sample(-1:6,N,replace=T)+rnorm(N)
+b <- n/8+4*cos(n/10)+sample(-3:3,N,replace=T)+rnorm(N) 
+c <- n/6+4*sin(n/10)+sample(-5:1,N,replace=T)+rnorm(N)
+y <- (a+b+c)/3+rnorm(N)
+
+
+date<-seq(as.Date("2018-1-1"), as.Date("2019-3-26"), by="days")
+
+x <- data.frame(date,a,b,c)  
+y <- data.frame(date, y)
+
+dx <- 2 # The AR order for the Exegenous series 
+dy <- 2 # The AR order for the Target series 
+delay <- 10 # The number of time steps that the target is in the future
+date <- T # Date or no Date Boolean
+
+data<-CoFESSNARX::CoFESNARXdata(y,x,dy,dx,delay,date)
+
+head(data)
+
+
+y <- CoFESSNARX::returnTARGET(data)
+x <- CoFESSNARX::returnX(data,T)
+print(head(y))
+print(head(x))
+```
+
+
+1)  Without date
+
+```{r warning=FALSE}
+
+library(CoFESSNARX)
+library(dplyr)
+set.seed(123)
+N <- 450 
+n <- seq(1:N)
+a <- n/10+4*sin(n/10)+sample(-1:6,N,replace=T)+rnorm(N)
+b <- n/8+4*cos(n/10)+sample(-3:3,N,replace=T)+rnorm(N) 
+c <- n/6+4*sin(n/10)+sample(-5:1,N,replace=T)+rnorm(N)
+y <- (a+b+c)/3+rnorm(N)
+
+
+x <- data.frame(a,b,c)
+y <- data.frame(y)
+
+
+dx <- 2 # The AR order for the Exegenous series 
+dy <- 2 # The AR order for the Target series 
+delay <- 10 # The number of time steps that the target is in the future
+date <- F # Date or no Date Boolean
+
+data<-CoFESSNARX::CoFESNARXdata(y,x,dy,dx,delay,date)
+
+head(data)
+
+
+y <- CoFESSNARX::returnTARGET(data)
+x <- CoFESSNARX::returnX(data,F)
+print(head(y))
+print(head(x))
+```
+
+
+## CoFESSNARXdata Exmple  (SNARX data prep)
+
+1)  With Date
+
+```{r warning=FALSE}
+
+library(CoFESSNARX)
+library(dplyr)
+
+set.seed(123)
+N <- 450 
+n <- seq(1:N)
+a <- n/10+4*sin(n/10)+sample(-1:6,N,replace=T)+rnorm(N)
+b <- n/8+4*cos(n/10)+sample(-3:3,N,replace=T)+rnorm(N) 
+c <- n/6+4*sin(n/10)+sample(-5:1,N,replace=T)+rnorm(N)
+y <- (a+b+c)/3+rnorm(N)
+
+
+date<-seq(as.Date("2018-1-1"), as.Date("2019-3-26"), by="days")
+
+x <- data.frame(date,a,b,c)
+y <- data.frame(date, y)
+
+
+dx <- 2 # The AR order for the Exegenous series 
+dy <- 2 # The AR order for the Target series 
+delay <- 10 # The number of time steps that the target is in the future
+date <- T # Date or no Date Boolean
+s <- 12
+
+data<-CoFESSNARX::CoFESSNARXdata(y,x,dy,dx,delay,s,date)
+
+head(data)
+
+
+y <- CoFESSNARX::returnTARGET(data)
+x <- CoFESSNARX::returnX(data,T)
+print(head(y))
+print(head(x))
+```
+
+
+1)  Without date
+
+```{r warning=FALSE}
+
+library(CoFESSNARX)
+library(dplyr)
+
+set.seed(123)
+N <- 450 
+n <- seq(1:N)
+a <- n/10+4*sin(n/10)+sample(-1:6,N,replace=T)+rnorm(N)
+b <- n/8+4*cos(n/10)+sample(-3:3,N,replace=T)+rnorm(N) 
+c <- n/6+4*sin(n/10)+sample(-5:1,N,replace=T)+rnorm(N)
+y <- (a+b+c)/3+rnorm(N)
+
+
+x <- data.frame(a,b,c)
+y <- data.frame(y)
+
+
+dx <- 2 # The AR order for the Exegenous series 
+dy <- 2 # The AR order for the Target series 
+delay <- 10 # The number of time steps that the target is in the future
+date <- F # Date or no Date Boolean
+s <- 12
+data<-CoFESSNARX::CoFESSNARXdata(y,x,dy,dx,delay,s,date)
+
+head(data)
+
+
+y <- CoFESSNARX::returnTARGET(data)
+x <- CoFESSNARX::returnX(data,F)
+#x <- CoFESSNARX::returnX(data,F)
+print(head(y))
+print(head(x))
+```
