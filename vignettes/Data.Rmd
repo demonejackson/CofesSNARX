@@ -58,10 +58,6 @@ $$y[t+delay]=f(x[t-d_x],...,x[t-1],x[t],\underline{y[t-s]},y[t-d_y],...,y[t-l], 
 1)  With Date
 
 ```{r warning=FALSE}
-
-dir.create("inst/doc")
-file.copy(dir("vignettes", full.names=TRUE), "inst/doc", overwrite=TRUE)
-
 library(CoFESSNARX)
 library(dplyr)
 

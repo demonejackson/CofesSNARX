@@ -33,7 +33,7 @@ library(dplyr)
 library(keras)
 library(tensorflow)
 
-??CoFESSNARX
+
 set.seed(123)
 N <- 450 
 n <- seq(1:N)
